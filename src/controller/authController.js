@@ -1,4 +1,6 @@
 const User = require("../models").Users;
+const UserRoles = require("../models").UserRoles;
+const sequelize = require("sequelize");
 
 const {
   passwordEncrypt,
@@ -15,8 +17,12 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     const checkEmailPresent = await User.findOne({
       where: { email_id: email },
+      include: {
+        model: UserRoles,
+        required: true,
+        as: "user_role",
+      },
     });
-    console.log(checkEmailPresent, "CHeck");
     if (
       checkEmailPresent &&
       checkEmailPresent.is_email_verified &&
@@ -31,10 +37,19 @@ const login = async (req, res) => {
           checkEmailPresent.id,
           checkEmailPresent.email_id
         );
-        res.setHeader("authToken", token);
-        return res
-          .status(200)
-          .json({ message: "Login successfully.", status: 200 });
+        return res.status(200).json({
+          status: 200,
+          auth_token: token,
+          message: "Login successfully.",
+          data: {
+            id: checkEmailPresent.id,
+            first_name: checkEmailPresent.first_name,
+            last_name: checkEmailPresent.last_name,
+            email: checkEmailPresent.email_id,
+            role_id: checkEmailPresent.role_id,
+            role_name: checkEmailPresent.user_role.name,
+          },
+        });
       }
     }
     return res
