@@ -16,7 +16,12 @@ const login = async (req, res) => {
     const checkEmailPresent = await User.findOne({
       where: { email_id: email },
     });
-    if (checkEmailPresent.is_email_verified && checkEmailPresent.is_active) {
+    console.log(checkEmailPresent, "CHeck");
+    if (
+      checkEmailPresent &&
+      checkEmailPresent.is_email_verified &&
+      checkEmailPresent.is_active
+    ) {
       const isValidPassword = await passwordCompare(
         password,
         checkEmailPresent.password
@@ -151,22 +156,23 @@ const changePassword = async (req, res) => {
     const userDetails = await User.findOne({
       where: { id: user_id, email_id: email },
     });
+    if (userDetails) {
+      const compare = await passwordCompare(old_password, userDetails.password);
 
-    const compare = await passwordCompare(old_password, userDetails.password);
-
-    if (compare) {
-      const newHashPassword = await passwordEncrypt(new_password);
-      await User.update(
-        {
-          password: newHashPassword,
-          modified_date: new Date(),
-          modified_by: user_id,
-        },
-        { where: { id: user_id, email_id: email } }
-      );
-      return res
-        .status(200)
-        .json({ status: 200, message: "User password updated successfully" });
+      if (compare) {
+        const newHashPassword = await passwordEncrypt(new_password);
+        await User.update(
+          {
+            password: newHashPassword,
+            modified_date: new Date(),
+            modified_by: user_id,
+          },
+          { where: { id: user_id, email_id: email } }
+        );
+        return res
+          .status(200)
+          .json({ status: 200, message: "User password updated successfully" });
+      }
     }
     return res
       .status(500)
