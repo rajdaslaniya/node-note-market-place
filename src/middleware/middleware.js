@@ -20,6 +20,7 @@ const userAuthenticate = async (req, res, next) => {
     if (user) {
       req.headers.user_id = user.id;
       req.headers.email = user.email_id;
+      req.headers.role_id = user.role_id;
       return next();
     }
   } catch (error) {

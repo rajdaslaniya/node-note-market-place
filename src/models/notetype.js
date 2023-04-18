@@ -1,7 +1,7 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-  class Country extends Model {
+  class NoteType extends Model {
     static associate(models) {
       this.createdAssociation = this.belongsTo(models.Users, {
         foreignKey: "created_by",
@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
-  Country.init(
+  NoteType.init(
     {
       id: {
         allowNull: false,
@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      country_code: {
+      description: {
         type: DataTypes.STRING,
         allowNull: false,
       },
@@ -60,11 +60,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "Country",
-      tableName: "country",
+      modelName: "NoteType",
+      tableName: "note_types",
       timestamps: false,
       freezeTableName: true,
     }
   );
-  return Country;
+  return NoteType;
 };

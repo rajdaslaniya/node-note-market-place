@@ -17,4 +17,20 @@ const changePasswordSchema = Joi.object({
   new_password: Joi.string().required("New password is required"),
 });
 
-module.exports = { signUpSchema, loginSchema, changePasswordSchema };
+const countrySchema = Joi.object({
+  name: Joi.string().required("Name is required"),
+  code: Joi.string().required("Code is required"),
+});
+
+const categorySchema = Joi.object({
+  name: Joi.string().required("Name is required"),
+  description: Joi.string().required("Description is required"),
+});
+
+module.exports = {
+  signUpSchema,
+  loginSchema,
+  changePasswordSchema,
+  countrySchema,
+  categorySchema,
+};

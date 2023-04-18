@@ -115,7 +115,7 @@ const emailVerify = async (req, res) => {
         .json({ status: 422, message: "User id is required" });
     }
     const updatedUser = await User.update(
-      { is_email_verified: true, modified_date: new Date() },
+      { is_email_verified: true, modified_by: id, modified_date: new Date() },
       { where: { id } }
     );
     if (updatedUser[0] > 0) {

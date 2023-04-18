@@ -9,6 +9,13 @@ app.use(cors());
 
 //Routes
 const authRouter = require("./src/router/authRouter");
+const countryRouter = require("./src/router/manageCountryRouter");
+const categoryRouter = require("./src/router/manageCategoryRouter");
+const noteTypesRouter = require("./src/router/manageNoteTypesRouter");
+
 app.use("/v1/auth", authRouter);
+app.use("/v1/admin/country", countryRouter);
+app.use("/v1/admin/category", categoryRouter);
+app.use("/v1/admin/types", noteTypesRouter);
 
 app.listen(port, () => console.log(`Server is listening on port ${port}...`));
