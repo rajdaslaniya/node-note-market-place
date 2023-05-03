@@ -3,6 +3,12 @@ const saltRounds = 10;
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 
+const config = require("../firebase_config/firebaseConfig");
+const firebaseApp = require("firebase/app");
+const firebaseStorage = require("firebase/storage");
+firebaseApp.initializeApp(config.firebaseConfig);
+const storage = firebaseStorage.getStorage();
+
 const passwordEncrypt = async (password) => {
   const salt = bcrypt.genSaltSync(saltRounds);
   const result = await bcrypt.hashSync(password, salt);
@@ -41,7 +47,7 @@ const sendEmailVerification = (name, email, id) => {
     from: process.env.SERVER_EMAIL,
     to: email,
     subject: "Note Marketplace - Email Verification",
-    html: `Hello ${name},<br/><br/> Thank you for signing up with us. Please click on below link to verify your email address and to do login.<br/><br/><a href='react.org?id=${id}' target='_blank'>verification link</a><br/><br/>Regards,<br/>Notes Marketplace`,
+    html: `Hello ${name},<br/><br/> Thank you for signing up with us. Please click on below link to verify your email address and to do login.<br/><br/><a href='https://notemarketplace.netlify.app/email/confirm/${id}' target='_blank'>verification link</a><br/><br/>Regards,<br/>Notes Marketplace`,
   };
   transporter.sendMail(mailOptions, function (error, info) {
     if (error) {
@@ -88,6 +94,26 @@ const generatePassword = () => {
   return retVal;
 };
 
+const uploadFileToFireBase = async (file_path, file, res) => {
+  try {
+    const storageRef = firebaseStorage.ref(storage, file_path);
+    const metadata = {
+      contentType: file.mimetype,
+    };
+
+    const snapshot = await firebaseStorage.uploadBytesResumable(
+      storageRef,
+      file.buffer,
+      metadata
+    );
+    return firebaseStorage.getDownloadURL(snapshot.ref);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ status: 500, message: "Internal server error" });
+  }
+};
+
 module.exports = {
   passwordEncrypt,
   passwordCompare,
@@ -97,4 +123,5 @@ module.exports = {
   sendEmailVerification,
   generatePassword,
   sendEmailForgotPassword,
+  uploadFileToFireBase,
 };

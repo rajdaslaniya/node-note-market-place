@@ -1,5 +1,8 @@
 const User = require("../models").Users;
 const UserRoles = require("../models").UserRoles;
+const UserProfiles = require("../models").UserProfiles;
+const Country = require("../models").Country;
+const config = require("../firebase_config/firebaseConfig");
 const sequelize = require("sequelize");
 
 const {
@@ -10,6 +13,7 @@ const {
   sendEmailVerification,
   generatePassword,
   sendEmailForgotPassword,
+  uploadFileToFireBase,
 } = require("../utils/common");
 
 const login = async (req, res) => {
@@ -85,7 +89,11 @@ const signUp = async (req, res, err) => {
       created_date: new Date(),
     });
     if (newUserData) {
-      sendEmailVerification(newUserData.first_name, newUserData.email_id);
+      sendEmailVerification(
+        newUserData.first_name,
+        newUserData.email_id,
+        newUserData.id
+      );
       return res.status(201).json({
         status: 201,
         data: newUserData,
@@ -200,4 +208,227 @@ const changePassword = async (req, res) => {
   }
 };
 
-module.exports = { login, signUp, emailVerify, forgotPassword, changePassword };
+const getUserDetails = async (req, res) => {
+  try {
+    const { user_id } = req.headers;
+    const userDetails = await UserProfiles.findOne({
+      attributes: [
+        "user_id",
+        "dob",
+        "gender",
+        "phone_code",
+        "phone_number",
+        "profile_picture",
+        "addressLine1",
+        "addressLine2",
+        "city",
+        "state",
+        "zip_code",
+        "country_id",
+        "university",
+        "college",
+        [sequelize.literal('"user_details"."first_name"'), "first_name"],
+        [sequelize.literal('"user_details"."last_name"'), "last_name"],
+        [sequelize.literal('"user_details"."email_id"'), "email_id"],
+      ],
+      where: { user_id },
+      include: { model: User, as: "user_details", attributes: [] },
+    });
+    const country = await Country.findAll({
+      attributes: ["id", "name"],
+      where: { is_active: true },
+    });
+
+    const phone_code = await Country.findAll({
+      attributes: ["id", "country_code"],
+      where: { is_active: true },
+    });
+
+    if (userDetails) {
+      return res.status(200).json({
+        status: 200,
+        message: "User details",
+        data: { country, phone_code, userDetails },
+      });
+    } else {
+      return res.status(200).json({
+        status: 200,
+        data: {
+          country,
+          phone_code,
+          userDetails: {
+            first_name: "",
+            last_name: "",
+            dob: "",
+            email: "",
+            gender: "",
+            phone_code: -1,
+            phone_number: "",
+            profile_picture: "",
+            addressLine1: "",
+            addressLine2: "",
+            city: "",
+            state: "",
+            zip_code: "",
+            country: -1,
+            university: "",
+            college: "",
+          },
+        },
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ status: 500, message: "Internal server error" });
+  }
+};
+
+const updateUserDetails = async (req, res) => {
+  try {
+    const { user_id } = req.headers;
+    const dateTime = Number(new Date());
+    const downloadURL = await uploadFileToFireBase(
+      `profile_picture/DP_${user_id}_${dateTime}`,
+      req.file,
+      res
+    );
+    const {
+      first_name,
+      last_name,
+      dob,
+      gender,
+      phone_code,
+      phone_number,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      country_id,
+      zip_code,
+      college,
+      university,
+    } = req.body;
+    await User.update(
+      {
+        first_name,
+        last_name,
+        modified_by: user_id,
+        modified_date: new Date(),
+      },
+      { where: { id: user_id } }
+    );
+    const userProfile = await UserProfiles.findOne({ where: { user_id } });
+    if (userProfile) {
+      await UserProfiles.update(
+        {
+          dob,
+          gender,
+          state,
+          country_id,
+          zip_code,
+          college,
+          addressLine1,
+          addressLine2,
+          university,
+          phone_code,
+          phone_number,
+          profile_picture: downloadURL,
+          city,
+          modified_date: new Date(),
+          modified_by: user_id,
+        },
+        { where: { user_id } }
+      );
+      const userDetails = await UserProfiles.findOne({
+        attributes: [
+          "user_id",
+          "dob",
+          "gender",
+          "phone_code",
+          "phone_number",
+          "profile_picture",
+          "addressLine1",
+          "addressLine2",
+          "city",
+          "state",
+          "zip_code",
+          "country_id",
+          "university",
+          "college",
+          [sequelize.literal('"user_details"."first_name"'), "first_name"],
+          [sequelize.literal('"user_details"."last_name"'), "last_name"],
+          [sequelize.literal('"user_details"."email_id"'), "email_id"],
+        ],
+        where: { user_id },
+        include: { model: User, as: "user_details", attributes: [] },
+      });
+
+      return res.status(200).json({
+        status: 200,
+        message: "User Details updated",
+        data: userDetails,
+      });
+    } else {
+      await UserProfiles.create({
+        user_id,
+        dob,
+        gender,
+        phone_code,
+        phone_number,
+        profile_picture: downloadURL,
+        addressLine1,
+        addressLine2,
+        city,
+        state,
+        country_id,
+        zip_code,
+        college,
+        university,
+        created_date: new Date(),
+        created_by: user_id,
+      });
+      const userDetails = await UserProfiles.findOne({
+        attributes: [
+          "user_id",
+          "dob",
+          "gender",
+          "phone_code",
+          "phone_number",
+          "profile_picture",
+          "addressLine1",
+          "addressLine2",
+          "city",
+          "state",
+          "zip_code",
+          "country_id",
+          "university",
+          "college",
+          [sequelize.literal('"user_details"."first_name"'), "first_name"],
+          [sequelize.literal('"user_details"."last_name"'), "last_name"],
+          [sequelize.literal('"user_details"."email_id"'), "email_id"],
+        ],
+        where: { user_id },
+        include: { model: User, as: "user_details", attributes: [] },
+      });
+      return res.status(200).json({
+        status: 200,
+        message: "User created successfully.",
+        data: userDetails,
+      });
+    }
+  } catch (error) {
+    return res.status(400).send(error.message);
+  }
+};
+
+module.exports = {
+  login,
+  signUp,
+  emailVerify,
+  forgotPassword,
+  changePassword,
+  getUserDetails,
+  updateUserDetails,
+};

@@ -27,10 +27,28 @@ const categorySchema = Joi.object({
   description: Joi.string().required("Description is required"),
 });
 
+const updateProfileSchema = Joi.object({
+  first_name: Joi.string().required("First name is required"),
+  last_name: Joi.string().required("Last name is required"),
+  dob: Joi.date().required("Dob is required"),
+  gender: Joi.string().required("Gender is required"),
+  phone_code: Joi.string().required("Phone code is required"),
+  phone_number: Joi.string().required("Phone number is required"),
+  addressLine1: Joi.string().required("Address line1 is required"),
+  addressLine2: Joi.string().required("Address line1 is required"),
+  city: Joi.string().required("City is required"),
+  state: Joi.string().required("State is required"),
+  country_id: Joi.string().required("Country id is required"),
+  zip_code: Joi.string().required("Zip code is required"),
+  college: Joi.string().required("College name is required"),
+  university: Joi.string().required("University name is required"),
+});
+
 module.exports = {
   signUpSchema,
   loginSchema,
   changePasswordSchema,
   countrySchema,
   categorySchema,
+  updateProfileSchema,
 };
